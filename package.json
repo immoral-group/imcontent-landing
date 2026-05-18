@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@Immoral-marketing/motor-blog": "0.1.32",
+    "@Immoral-marketing/motor-blog": "0.1.36",
     "@emotion/cache": "11.14.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
@@ -78,7 +78,6 @@
   "devDependencies": {
     "tailwindcss": "4.1.12"
   },
-
   "pnpm": {
     "overrides": {
       "vite": "6.3.5"
