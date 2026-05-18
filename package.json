@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@Immoral-marketing/motor-blog": "0.1.37",
+    "@Immoral-marketing/motor-blog": "0.1.38",
     "@emotion/cache": "11.14.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
