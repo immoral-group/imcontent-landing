@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@Immoral-marketing/motor-blog':
-        specifier: 0.1.39
-        version: 0.1.39(@emotion/is-prop-valid@1.4.0)(tailwindcss@4.1.12)
+        specifier: 0.1.40
+        version: 0.1.40(@emotion/is-prop-valid@1.4.0)(tailwindcss@4.1.12)
       '@emotion/cache':
         specifier: 11.14.0
         version: 11.14.0
@@ -210,8 +210,8 @@ importers:
 
 packages:
 
-  '@Immoral-marketing/motor-blog@0.1.39':
-    resolution: {integrity: sha512-Uw3CAjlakg7OWl7mqu8s2YXm3KvLfoGiVL9wEEh5nb7hCS+LsEzrGj40cAVNcytN/KCJFh7NQ+cwstEE5ayidw==, tarball: https://npm.pkg.github.com/download/@Immoral-marketing/motor-blog/0.1.39/12d9533836bd91ae76d1f22c1cb050c7ffcda813}
+  '@Immoral-marketing/motor-blog@0.1.40':
+    resolution: {integrity: sha512-w1nymlrF/clAElxTDIjQecgGpZK9Fp3B8nHf+8f5h0rmisknDDblkV018FAK1fPMYRT5sk3UWOfG3GchDp50jA==, tarball: https://npm.pkg.github.com/download/@Immoral-marketing/motor-blog/0.1.40/28387eac4a94bd683a38f4026e3122fa442e774a}
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -2363,7 +2363,7 @@ packages:
 
 snapshots:
 
-  '@Immoral-marketing/motor-blog@0.1.39(@emotion/is-prop-valid@1.4.0)(tailwindcss@4.1.12)':
+  '@Immoral-marketing/motor-blog@0.1.40(@emotion/is-prop-valid@1.4.0)(tailwindcss@4.1.12)':
     dependencies:
       '@supabase/supabase-js': 2.106.0
       '@tailwindcss/typography': 0.5.19(tailwindcss@4.1.12)
