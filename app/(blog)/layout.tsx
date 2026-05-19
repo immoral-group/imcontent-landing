@@ -13,7 +13,7 @@ export default async function BlogLayout({
 
   return (
     <BlogConfigProvider config={blogConfig}>
-      <>
+      <div className="blog-shell">
         {children}
 
       {/* GTM — capa blog */}
@@ -59,7 +59,7 @@ export default async function BlogLayout({
           dangerouslySetInnerHTML={{ __html: vertical.custom_head_scripts }}
         />
       )}
-      </>
+      </div>
     </BlogConfigProvider>
   )
 }
