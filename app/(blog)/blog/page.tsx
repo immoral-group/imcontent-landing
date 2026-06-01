@@ -22,7 +22,7 @@ async function getArticulos() {
     .eq('estado', 'publicado')
     .eq('noindex', false)
     .order('fecha_publicacion', { ascending: false, nullsFirst: false })
-    .limit(20)
+    .limit(90)
   return data || []
 }
 
