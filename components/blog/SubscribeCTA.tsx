@@ -134,8 +134,7 @@ export default function SubscribeCTA({
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6"
               style={{
-                background: 'var(--blog-accent)',
-                opacity: 0.1,
+                background: 'color-mix(in srgb, var(--blog-accent) 10%, transparent)',
               }}
             >
               <Mail className="w-3.5 h-3.5" style={{ color: 'var(--blog-accent)' }} />
