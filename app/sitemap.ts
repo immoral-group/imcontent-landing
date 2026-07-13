@@ -3,6 +3,13 @@ import { supabase } from '@/lib/supabase'
 import { getVerticalConfig } from '@/lib/vertical'
 import { getBaseUrl } from '@/lib/site-url'
 
+// force-dynamic: con solo `revalidate`, Next.js pre-renderiza esta ruta en
+// build time y Vercel puede servir esa versión cacheada (incl. errores de
+// build) durante toda la ventana de revalidación, incluso tras un redeploy.
+// Verificado en producción el 2026-07-13: sitemap.xml servía un XML vacío
+// cacheado (X-Vercel-Cache: HIT) minutos después de un deploy con el fix
+// ya aplicado. force-dynamic ejecuta la función en cada petición.
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { getVerticalConfig } from '@/lib/vertical'
 import { getBaseUrl } from '@/lib/site-url'
 
+// force-dynamic: ver app/sitemap.ts para el porqué (evita servir una
+// respuesta cacheada de antes de un fix, incl. tras redeploy).
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export async function GET() {

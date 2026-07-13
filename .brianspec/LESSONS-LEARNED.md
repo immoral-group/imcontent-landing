@@ -33,6 +33,14 @@ Este archivo es la **memoria de errores y aprendizajes del proyecto**. Lo escrib
 **Cómo aplicar:** toda query a Supabase que alimente una superficie pública (sitemap, robots, llms.txt, metadata) debe destructurar también `error` y hacer `console.error` (con contexto suficiente para depurar, sin exponer secretos) si `error` no es `null`.
 **Severidad:** Alta
 
+## LL-003 — `revalidate` solo no basta: puede servir una respuesta cacheada (incluso vacía o 404) tras un redeploy con el fix ya aplicado
+**Fecha:** 2026-07-13
+**Spec origen:** SPEC-02 / SPEC-05 (verificación post-deploy)
+**Stack afectado:** Next.js App Router (Route Handlers con `export const revalidate = N`) + Vercel
+**Lección:** tras mergear y desplegar el fix de SPEC-02, `curl https://imcontent.es/sitemap.xml` seguía devolviendo `<urlset></urlset>` (vacío) con cabecera `X-Vercel-Cache: HIT` — una respuesta cacheada de ANTES del fix, no una ejecución fresca del código nuevo. Por separado, `/llms.txt` (ruta nueva) devolvía 404 con `X-Matched-Path: /404` y también `X-Vercel-Cache: HIT`, mientras que `/llm.txt` (alias, mismo código, ya existía antes del cambio de convención de caché) sí funcionaba con `X-Vercel-Cache: PRERENDER` y contenido fresco. Un `git commit --allow-empty` + push a `master` para forzar un deploy limpio (sin build cache) NO resolvió el problema — confirma que el problema no es de build cache de dependencias, sino del cacheo de la respuesta HTTP de la propia ruta (Full Route Cache / Data Cache de Next.js en Vercel), que puede persistir entre deploys.
+**Cómo aplicar:** en rutas públicas críticas para SEO (`sitemap.xml`, `robots.txt`, `llms.txt`) que dependen de datos externos (Supabase) y donde servir contenido stale tiene coste real (Google/IA no descubren contenido nuevo), añadir `export const dynamic = 'force-dynamic'` junto al `revalidate` — esto fuerza ejecución en cada petición y evita depender de que el cacheo estático/ISR se invalide correctamente tras un deploy. Verificar siempre post-deploy con `curl -I` mirando la cabecera `X-Vercel-Cache` (debe ser `MISS` o no aparecer, nunca `HIT` con contenido que se sabe que cambió) antes de dar por buena una implementación.
+**Severidad:** Alta
+
 ## Entradas
 
 _(Añadir nuevas lecciones arriba de esta sección, con numeración `LL-NNN` incremental.)_
