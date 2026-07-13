@@ -1,0 +1,13 @@
+# Configuración de la skill de análisis SEO/GSC para imcontent-landing
+# Proyecto: imcontent.es
+#
+# Este archivo queda intencionalmente mínimo — se completará cuando se dé de alta
+# la propiedad en Google Search Console (ver SPEC-08) y se conecte el MCP de GSC.
+
+site: https://imcontent.es/
+
+report_destinations: []
+
+clickup: {}
+
+thresholds: {}

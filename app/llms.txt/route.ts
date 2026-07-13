@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getLlmsTxtContent } from '@/lib/llms-txt'
 
-// Alias de compatibilidad. La ruta canónica es /llms.txt (ver SPEC-05).
 export const revalidate = 3600
 
 export async function GET() {
