@@ -1,6 +1,6 @@
 # SPEC-08: Alta y verificación en Google Search Console
 
-**Versión:** 1.0
+**Versión:** 1.1
 **Estado:** draft — acción manual, fuera del alcance de este repo
 **Tipo de proyecto:** web-app
 **Última actualización:** 2026-07-13
@@ -10,7 +10,9 @@
 
 ## Descripción
 
-imcontent.es no está dado de alta en Google Search Console: no hay archivo ni meta tag de verificación, y el dominio no está en la whitelist del MCP compartido de GSC. Sin esto, no hay visibilidad de cómo Google rastrea e indexa el sitio, ni forma de enviar el sitemap formalmente ni de detectar errores de indexación. Esta spec documenta el trabajo pendiente, que es 100% manual/infraestructura — no hay código que implementar en este repo (salvo que, al decidir el método de verificación, se elija meta tag en vez de DNS TXT, en cuyo caso sí habría un cambio mínimo de código, ver Edge cases).
+imcontent.es no está dado de alta en Google Search Console: no hay archivo ni meta tag de verificación, y el dominio no está en la whitelist del MCP compartido de GSC. Sin esto, no hay visibilidad de cómo Google rastrea e indexa el sitio, ni forma de enviar el sitemap formalmente ni de detectar errores de indexación. El trabajo es mayormente manual/infraestructura — el único cambio de código en este repo es la subida de un archivo HTML de verificación a `public/` (método probado en Immoral, ver Contexto operativo abajo).
+
+**Contexto operativo importante** (doc ClickUp `knvz4-82755`, página "03 — Infraestructura compartida"): en Immoral, el método probado y recomendado para verificar propiedades en GSC es **archivo HTML en `public/`**. La verificación por DNS/TXT en el proveedor de dominios ha dado problemas en experiencias previas del equipo, así que se evita. Para Next.js con Vercel, colocar el archivo en `public/googleXXXXXXXX.html` es directo y no requiere código adicional (equivalente a la ruta HTML estática que Next.js sirve tal cual desde `public/`).
 
 ---
 
@@ -24,30 +26,35 @@ imcontent.es no está dado de alta en Google Search Console: no hay archivo ni m
 
 ## Flujos principales
 
-### Flujo 1: Alta y verificación (trabajo manual)
+### Flujo 1: Alta y verificación (trabajo mayormente manual)
 
-1. Crear la propiedad `imcontent.es` en Google Search Console (modo Dominio, recomendado, o modo prefijo URL `https://imcontent.es`).
-2. Elegir método de verificación: DNS TXT (recomendado — desacoplado del código y del ciclo de deploy, mismo patrón usado en el proyecto de referencia `immoralia-catalogo-procesos` SPEC-14) o meta tag HTML.
-3. Si DNS TXT: copiar el valor que entrega Google y añadirlo como registro TXT en el DNS de `imcontent.es`. Esperar propagación. Confirmar verificación en GSC.
-4. Si meta tag: añadir el meta tag de verificación al `<head>` (requeriría un pequeño cambio de código en `app/layout.tsx` o vía `metadata.verification` de Next.js — en ese caso, esta spec pasaría a `aprobada` con un CA de código añadido antes de implementarse).
-5. Una vez verificado, enviar el sitemap (`https://imcontent.es/sitemap.xml`, corregido por SPEC-02) desde el panel de GSC → Sitemaps.
-6. Confirmar que el sitemap aparece como **Success**.
+1. Crear la propiedad `https://imcontent.es` en Google Search Console **por prefijo URL** (no modo Dominio — modo Dominio exige DNS TXT, que el equipo evita, ver Contexto operativo en Descripción).
+2. Google entrega un archivo `googleXXXXXXXX.html` con un token único.
+3. Colocar ese archivo en `public/googleXXXXXXXX.html` del repo, commit y push. Vercel despliega automáticamente.
+4. Pulsar "Verificar" en el panel de GSC.
+5. Añadir la Service Account `gsc-mcp@informes-immoral.iam.gserviceaccount.com` como **Propietario** (no "Completo", ver nota abajo) en GSC → Configuración → Usuarios y permisos.
+6. Enviar el sitemap (`https://imcontent.es/sitemap.xml`, corregido por SPEC-01 y SPEC-02) desde el panel de GSC → Sitemaps.
+7. Confirmar que el sitemap aparece como **Success**.
+8. Añadir `https://imcontent.es/` a `GSC_ALLOWED_SITES` del `.env` del contenedor `/opt/gsc-mcp/` en el VPS `srv1596187` (Hostinger) y ejecutar `docker compose up -d --build`. Reconectar el conector de Claude.ai si es necesario tras el reinicio.
 
 ---
 
 ## Flujos alternativos / Edge cases
 
-- **Verificación falla por DNS no propagado:** se reintenta tras esperar propagación (hasta 24h). No bloquea nada más del proyecto.
-- **Se decide verificar por meta tag en vez de DNS:** esta spec debe reescribirse a estado `aprobada` con criterios de aceptación de código (meta tag en `app/layout.tsx`) antes de poder implementarse — hoy sigue en `draft` porque el método no está decidido.
-- **El MCP compartido de GSC del equipo no tiene el dominio en whitelist:** solicitar a quien administre ese MCP que añada `imcontent.es` una vez la propiedad esté verificada, para poder usar las herramientas de análisis continuo de GSC (fuera de alcance de esta spec).
+- **Rol "Propietario" vs "Completo" para la Service Account:** debe ser Propietario. Con "Completo" se pueden leer datos pero la Indexing API devuelve 403 al solicitar indexaciones (lección aprendida, doc ClickUp `knvz4-82755` página 03).
+- **Archivo de verificación mal desplegado por caché de Vercel:** tras el commit, verificar con `curl https://imcontent.es/googleXXXXXXXX.html` que devuelve 200 antes de pulsar "Verificar" en GSC. Si devuelve 404, esperar redeploy completo o forzarlo desde el dashboard.
+- **Modo Dominio (DNS TXT):** descartado deliberadamente. El equipo evita DNS TXT por experiencia previa en IONOS (ver Contexto operativo en Descripción). Solo considerar si el prefijo URL con archivo HTML falla por algún motivo no previsto.
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] CA-01: La propiedad `imcontent.es` existe y aparece como **verificada** en Google Search Console.
-- [ ] CA-02: El sitemap `https://imcontent.es/sitemap.xml` está enviado desde el panel de GSC y aparece como **Success**.
-- [ ] CA-03: El dominio `imcontent.es` está añadido a la whitelist del MCP compartido de GSC del equipo (si aplica el uso de ese MCP para este proyecto).
+- [ ] CA-01a (verificable localmente/en preview): Existe un archivo `public/googleXXXXXXXX.html` commiteado y desplegado. `curl https://imcontent.es/googleXXXXXXXX.html` devuelve 200 con el contenido esperado (`google-site-verification: googleXXXXXXXX.html`).
+- [ ] CA-01: La propiedad `https://imcontent.es` (modo prefijo URL) existe y aparece como **verificada** en Google Search Console.
+- [ ] CA-02: La Service Account `gsc-mcp@informes-immoral.iam.gserviceaccount.com` aparece con rol **Propietario** (no "Completo") en GSC → Usuarios y permisos de la propiedad `https://imcontent.es`.
+- [ ] CA-03: El sitemap `https://imcontent.es/sitemap.xml` está enviado desde el panel de GSC y aparece como **Success** (requiere SPEC-01 y SPEC-02 aplicadas previamente para que el sitemap tenga contenido válido).
+- [ ] CA-04: `https://imcontent.es/` aparece en el valor de `GSC_ALLOWED_SITES` del `.env` del contenedor `/opt/gsc-mcp/` en el VPS `srv1596187`.
+- [ ] CA-05: Una consulta de prueba con `gsc_list_sitemaps` sobre `https://imcontent.es/` desde el MCP compartido devuelve datos sin error de "sitio no autorizado".
 
 ---
 
@@ -97,14 +104,18 @@ No aplica — trabajo manual/infraestructura.
 
 ### Desglose de tareas
 
-1. **[Manual]** Crear propiedad en GSC.
-2. **[Manual]** Verificar (DNS TXT recomendado).
-3. **[Manual]** Enviar sitemap.
-4. **[Manual, opcional]** Añadir el dominio al MCP compartido de GSC.
+1. **[Manual]** Crear la propiedad `https://imcontent.es` en modo prefijo URL en GSC. Descargar el archivo `googleXXXXXXXX.html`.
+2. **[Código — mínimo]** Añadir `public/googleXXXXXXXX.html` al repo, commit y push. Vercel despliega automáticamente.
+3. **[Manual]** Pulsar "Verificar" en GSC una vez el archivo esté servido en producción.
+4. **[Manual]** Añadir `gsc-mcp@informes-immoral.iam.gserviceaccount.com` como Propietario (no "Completo") en GSC → Configuración → Usuarios y permisos.
+5. **[Manual]** Enviar el sitemap `https://imcontent.es/sitemap.xml` desde el panel de GSC.
+6. **[Manual]** Acceder por SSH al VPS `srv1596187` (Hostinger), editar `/opt/gsc-mcp/.env` añadiendo `https://imcontent.es/` a `GSC_ALLOWED_SITES`, ejecutar `docker compose up -d --build`.
+7. **[Manual]** Reconectar el conector "Google Search Console - MCP" en Claude.ai si es necesario tras el reinicio.
+8. **[Verificación]** `gsc_list_sitemaps` sobre `https://imcontent.es/` desde el MCP devuelve datos.
 
 ### Dependencias con otras specs
 
-- **Depende de SPEC-01 y SPEC-02:** el sitemap debe estar corregido (URLs con dominio correcto y contenido no vacío) antes de enviarlo a GSC — enviarlo roto generaría errores de indexación reales en el panel que luego habría que limpiar.
+- **Depende de SPEC-01 y SPEC-02:** el sitemap debe estar corregido (URLs con dominio correcto y contenido no vacío) antes de enviarlo a GSC — enviarlo roto generaría errores de indexación reales en el panel que luego habría que limpiar. La SPEC-01 depende además de un cambio manual en Vercel (`NEXT_PUBLIC_APP_URL`), así que el orden real es: 1) fix env en Vercel → 2) merge de PR con SPEC-01/02 → 3) esta SPEC.
 
 ---
 
@@ -126,3 +137,4 @@ No aplica.
 | Versión | Fecha | Cambio | Autor |
 |---|---|---|---|
 | 1.0 | 2026-07-13 | Versión inicial. Marcada como draft — acción manual, fuera del alcance de este repo. No se implementa código en esta ronda. | David Navarrete |
+| 1.1 | 2026-07-13 | Auditoría con Claude Opus. Corregida contradicción con doc del equipo: la SPEC recomendaba DNS TXT, pero la página "03 — Infraestructura compartida" del doc `knvz4-82755` dice explícitamente que el método probado en Immoral es archivo HTML en `public/` (DNS TXT descartado por experiencia previa en IONOS). Cambiado a verificación por prefijo URL + archivo HTML, con un mínimo cambio de código (commit del archivo en `public/`). Añadidos los detalles concretos que faltaban: email exacto de la Service Account (`gsc-mcp@informes-immoral.iam.gserviceaccount.com`), ruta del `.env` del VPS (`/opt/gsc-mcp/.env`), nombre del VPS (`srv1596187`), formato de valor de `GSC_ALLOWED_SITES` (URL con protocolo y barra final), rol correcto ("Propietario" no "Completo") y paso de reconectar el conector de Claude.ai. Añadidos CA-01a (verificable localmente) y CA-04/CA-05. | David Navarrete |

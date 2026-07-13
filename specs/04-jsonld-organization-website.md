@@ -1,6 +1,6 @@
 # SPEC-04: JSON-LD Organization/WebSite en el layout raíz
 
-**Versión:** 1.0
+**Versión:** 1.1
 **Estado:** aprobada
 **Tipo de proyecto:** web-app
 **Última actualización:** 2026-07-13
@@ -36,15 +36,16 @@ No hay ni un solo bloque `application/ld+json` en ninguna página del sitio, ni 
 
 ## Flujos alternativos / Edge cases
 
-- **No existe un logo identificable en el repo:** se omite el campo `logo` en vez de inventar una URL que no existe (evita un dato estructurado falso, que Google penaliza más que la ausencia del campo).
+- **Fuente del logo:** el repo `imcontent-landing` **no tiene** un logo en `public/` (verificado el 2026-07-13: solo existen assets con hash de Figma). El logo del vertical vive en la BD compartida (`verticales_panel.logo_url` para el vertical de imcontent, con id `28cfe07f-5e0a-4228-b072-07b95772fd51`, apunta hoy a `https://cnulbzfqwfkqvfkmbnxj.supabase.co/storage/v1/object/public/imagenes-blog/logos/28cfe07f-5e0a-4228-b072-07b95772fd51/logo.png?t=...`). Al implementar esta SPEC, decidir: (a) leer el logo desde Supabase (implica hacer async el layout raíz, o mover el JSON-LD a un client component consumiendo el mismo `getVerticalConfig()` que ya existe) o (b) hardcodear la URL de Supabase como constante en el repo (más simple, riesgo bajo — la URL cambia solo si se sube un logo nuevo desde el panel, que es un evento poco frecuente). Recomendado: opción (b) para esta ronda, con una constante en `lib/organization.ts` documentando de dónde salió.
 - **La URL base depende de `NEXT_PUBLIC_APP_URL`:** el JSON-LD debe usar la misma fuente normalizada que SPEC-01 (el helper `lib/site-url.ts`), para no introducir un cuarto punto con el mismo bug de URL mal formada.
 - **Página de blog individual:** hereda el JSON-LD Organization/WebSite del layout raíz igual que las páginas estáticas; no se duplica con ningún JSON-LD `Article` (que no existe todavía, ver Out of scope) porque los `@type` son distintos y coexisten sin conflicto.
+- **`sameAs` (redes sociales de imcontent):** no se ha confirmado si imcontent tiene perfiles públicos propios (Instagram, LinkedIn, TikTok, YouTube) distintos de los de Immoral Group. **Ambigüedad para preguntar a Julián/David antes de implementar** — si los hay, incluirlos en `sameAs`; si no, omitir el campo por completo (mejor omitirlo que apuntar a los perfiles de la matriz Immoral y confundir a Google sobre la identidad de imcontent como entidad propia).
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] CA-01: `app/layout.tsx` incluye un `<script type="application/ld+json">` con un objeto `@type: "Organization"` con al menos `name` y `url`.
+- [ ] CA-01: `app/layout.tsx` incluye un `<script type="application/ld+json">` con un objeto `@type: "Organization"` con al menos `name` y `url`. **Adicionalmente**, si `verticales_panel.logo_url` está disponible para el vertical de imcontent en Supabase (confirmado: existe una URL de logo en la fila del panel, ver Notas de investigación abajo), incluir `logo` con ese valor. Si el logo del panel es un ícono cuadrado no adecuado como logo de marca (< 112×112 px, o de una relación de aspecto extrema), omitir el campo `logo` en lugar de incluir uno que Google marque como inválido en el Rich Results Test.
 - [ ] CA-02: El mismo bloque (o uno adicional) incluye un objeto `@type: "WebSite"` con al menos `name` y `url`.
 - [ ] CA-03: La `url` usada en ambos objetos se construye con el mismo helper normalizado de `NEXT_PUBLIC_APP_URL` introducido en SPEC-01 (`lib/site-url.ts`), no con una URL hardcodeada distinta.
 - [ ] CA-04: El JSON-LD es válido — parsea sin error con `JSON.parse()` sobre el contenido del script.
@@ -180,3 +181,5 @@ No aplica.
 | Versión | Fecha | Cambio | Autor |
 |---|---|---|---|
 | 1.0 | 2026-07-13 | Versión inicial, aprobada directamente para ejecución tras la auditoría SEO del 2026-07-13. | David Navarrete |
+| 1.1 | 2026-07-13 | Auditoría con Claude Opus. Ampliada la sección "Edge cases" con la fuente concreta del logo (URL de Supabase, confirmada consultando `verticales_panel` en la BD compartida) y las dos opciones para exponerla (leer async del helper, o hardcodear como constante). Añadido edge case sobre `sameAs` — ambigüedad a resolver con Julián: si imcontent tiene perfiles sociales propios, incluirlos; si no, omitir en vez de usar los de la matriz Immoral. Reforzado el CA-01 para exigir intento de incluir `logo` cuando esté disponible. | David Navarrete |
+| 1.2 | 2026-07-13 | Verificado el código ya implementado en PR #1 (rama `seo/brianspec-fase2`): `app/layout.tsx` usa como `logo` el mismo asset que `components/Header.tsx` (`/assets/4b809f1bb00613cd9fd4d3b0f6724cf9516b9d57.png`) — el logo real de marca ya usado en el sitio, una fuente más fiable que la URL de Supabase que proponía la v1.1 (evita depender de que el panel admin mantenga ese campo actualizado). `sameAs` correctamente omitido (ambigüedad sin resolver, criterio de "omitir si no está confirmado" aplicado). CA-01 a CA-06 cumplidos — no requiere cambios de código adicionales. | David Navarrete |

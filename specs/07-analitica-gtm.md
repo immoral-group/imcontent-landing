@@ -1,6 +1,6 @@
 # SPEC-07: Analítica — configurar NEXT_PUBLIC_GTM_ID
 
-**Versión:** 1.0
+**Versión:** 1.1
 **Estado:** draft — bloqueada, pendiente de ID de GTM/GA4 de Julián o David
 **Tipo de proyecto:** web-app
 **Última actualización:** 2026-07-13
@@ -37,15 +37,18 @@
 
 - **Se decide usar GA4 directo en vez de GTM:** requeriría una spec nueva (o una revisión de ésta) porque el código actual solo soporta la variable `NEXT_PUBLIC_GTM_ID` y el snippet de GTM, no un snippet de gtag.js directo — son mecanismos de inyección distintos.
 - **El ID llega pero corresponde a un contenedor de otro vertical/proyecto por error:** se debe confirmar explícitamente con Julián/David que el ID pertenece específicamente al contenedor de imcontent.es antes de configurarlo en Vercel Production.
+- **Doble carga de GTM vía `TrackingInjector` del motor de blog:** `app/layout.tsx` renderiza `<TrackingInjector verticalId={process.env.VERTICAL_ID} />` del paquete `@Immoral-marketing/motor-blog`. Ese componente lee `verticales_panel.google_tag_manager_id` de Supabase y, si existe, inyecta su propio snippet de GTM. Confirmado en la BD compartida (2026-07-13): el registro `verticales_panel` de imcontent tiene `google_tag_manager_id = null` — el `TrackingInjector` no está inyectando nada hoy. **Riesgo:** si en el futuro alguien configura ese campo desde el panel admin, se solaparía con `NEXT_PUBLIC_GTM_ID`, generando doble tracking. Documentar en el PR que las dos fuentes de GTM ID (variable de entorno + campo en `verticales_panel`) deben estar coordinadas — el equipo debe decidir cuál es la fuente de verdad. Recomendación provisional: usar solo `verticales_panel.google_tag_manager_id` (gestionado desde el panel admin, coherente con `immoralia.es/blog` que usa `GTM-W6R3TRSN` por esa vía) y no configurar `NEXT_PUBLIC_GTM_ID` en Vercel. Confirmar con Julián antes de decidir.
+- **Consentimiento de cookies:** no hay banner ni Consent Mode v2 activo. Instalar GTM en producción sin gestor de consentimiento tiene el mismo riesgo legal RGPD/LSSI que en immoral SPEC-06 — documentado aquí como riesgo, no como bloqueo de esta SPEC (que ya está bloqueada por el ID). Debe abordarse antes de que GTM entre en producción real.
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] CA-01: Julián o David proporciona un ID de GTM válido (formato `GTM-XXXXXXX`) específico para imcontent.es.
-- [ ] CA-02: La variable `NEXT_PUBLIC_GTM_ID` se configura en Vercel → Settings → Environment Variables → Production con ese valor (acción manual, fuera de este repo).
-- [ ] CA-03: Tras el deploy, `curl https://imcontent.es/` devuelve HTML que contiene `googletagmanager.com/gtm.js?id=GTM-` con el ID configurado.
+- [ ] CA-01: Julián o David proporciona un ID de GTM válido (formato `GTM-XXXXXXX`) específico para imcontent.es **y confirma explícitamente cuál es la fuente de verdad**: (a) `NEXT_PUBLIC_GTM_ID` en Vercel, o (b) `verticales_panel.google_tag_manager_id` en Supabase (vía panel admin, misma vía que Immoralia). Solo una — no ambas simultáneamente.
+- [ ] CA-02: El ID se configura por la vía elegida en CA-01 (acción manual, fuera de este repo).
+- [ ] CA-03: Tras el deploy, `curl https://imcontent.es/` devuelve exactamente **un** script de GTM (no dos: la vía no elegida debe permanecer sin configurar).
 - [ ] CA-04: En el panel de GTM/GA4, se observan eventos de pageview entrando desde imcontent.es en las 24h posteriores a la configuración.
+- [ ] CA-05 (defecto seguro): mientras esta SPEC esté en `draft`, ni `NEXT_PUBLIC_GTM_ID` en Vercel ni `verticales_panel.google_tag_manager_id` en Supabase para el vertical de imcontent tienen un valor — ambos siguen `null`/vacío.
 
 ---
 
@@ -123,3 +126,4 @@ No aplica — spec de configuración, no de código.
 | Versión | Fecha | Cambio | Autor |
 |---|---|---|---|
 | 1.0 | 2026-07-13 | Versión inicial. Marcada como draft — bloqueada, pendiente del ID de GTM/GA4 de Julián o David. No se implementa código en esta ronda. | David Navarrete |
+| 1.1 | 2026-07-13 | Auditoría con Claude Opus. Descubrimiento crítico: `app/layout.tsx` ya renderiza `<TrackingInjector />` del paquete `@Immoral-marketing/motor-blog`, que puede inyectar GTM a partir de `verticales_panel.google_tag_manager_id` (Supabase). Verificado en BD: hoy `null` para imcontent, así que no hay doble tracking, pero existe la vía. Añadido edge case, ampliado CA-01 para exigir elección explícita entre las dos fuentes (variable de entorno vs BD), CA-03 revisado para verificar que solo hay UN script de GTM, y añadido CA-05 de defecto seguro. Añadido edge case sobre consentimiento de cookies (mismo riesgo legal que immoral SPEC-06). | David Navarrete |
