@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getVerticalConfig } from '@/lib/vertical'
+import { getBaseUrl } from '@/lib/site-url'
 
 export const revalidate = 3600
 
 export async function GET() {
   const vertical = await getVerticalConfig()
-  const baseUrl  = process.env.NEXT_PUBLIC_APP_URL || ''
+  const baseUrl  = getBaseUrl()
 
   const base = [
     'User-agent: *',

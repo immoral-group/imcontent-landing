@@ -3,14 +3,25 @@ import BlogHero       from '@/components/blog/BlogHero'
 import BlogList       from '@/components/blog/BlogList'
 import SubscribeCTA   from '@/components/blog/SubscribeCTA'
 import { blogConfig } from '@/lib/blog-config'
+import { getBaseUrl } from '@/lib/site-url'
 import type { Metadata } from 'next'
 
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
+  const title       = `Blog | ${blogConfig.siteName}`
+  const description = blogConfig.hero.subtitle
+
   return {
-    title:       `Blog | ${blogConfig.siteName}`,
-    description: blogConfig.hero.subtitle,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url:      `${getBaseUrl()}/blog`,
+      siteName: blogConfig.siteName,
+      type:     'website',
+    },
   }
 }
 

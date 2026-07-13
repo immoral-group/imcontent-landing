@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Providers from "./providers";
 import { TrackingInjector } from "@Immoral-marketing/motor-blog";
+import { getBaseUrl } from "@/lib/site-url";
 
 const lexend = Lexend({
   subsets: ["latin"],
@@ -23,9 +24,35 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const baseUrl = getBaseUrl();
+
+  // JSON-LD Organization/WebSite — base mínima de datos estructurados para
+  // todas las páginas del sitio (SPEC-04). El JSON-LD `Article` de los
+  // posts de blog queda fuera de este repo (paquete @Immoral-marketing/motor-blog).
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "imcontent",
+      url: baseUrl || undefined,
+      logo: baseUrl ? `${baseUrl}/assets/4b809f1bb00613cd9fd4d3b0f6724cf9516b9d57.png` : undefined,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "imcontent",
+      url: baseUrl || undefined,
+    },
+  ];
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${lexend.variable} antialiased min-h-screen bg-white relative`}>
+        <script
+          id="jsonld-organization-website"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <TrackingInjector verticalId={process.env.VERTICAL_ID} />
         <Providers>
           <Header />
