@@ -62,21 +62,23 @@ export default function RootLayout({
           <Footer />
         </Providers>
 
-        {/* GTM — capa 2: cobertura completa del dominio */}
-        {process.env.NEXT_PUBLIC_GTM_ID && (
-          <Script
-            id="gtm-root"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{ __html: `
-              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://www.googletagmanager.com/gtm.js?id='+i+dl;
-              f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','${process.env.NEXT_PUBLIC_GTM_ID}');
-            ` }}
-          />
-        )}
+        {/* GA4 directo (SPEC-07 v2.0): decisión 14/07/2026, sin GTM — mismo
+            patrón que el Catálogo de Procesos y que immoral.es. ID de la
+            propiedad GA4 "imcontent.es" creada el mismo día. */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-WR0VBSQ3WF"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="ga4-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-WR0VBSQ3WF');
+          ` }}
+        />
       </body>
     </html>
   );
