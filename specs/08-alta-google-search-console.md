@@ -1,9 +1,9 @@
 # SPEC-08: Alta y verificación en Google Search Console
 
-**Versión:** 1.1
-**Estado:** draft — acción manual, fuera del alcance de este repo
+**Versión:** 2.0
+**Estado:** aprobada — implementada
 **Tipo de proyecto:** web-app
-**Última actualización:** 2026-07-13
+**Última actualización:** 2026-07-14
 **Owner:** David Navarrete
 
 ---
@@ -49,12 +49,12 @@ imcontent.es no está dado de alta en Google Search Console: no hay archivo ni m
 
 ## Criterios de aceptación
 
-- [ ] CA-01a (verificable localmente/en preview): Existe un archivo `public/googleXXXXXXXX.html` commiteado y desplegado. `curl https://imcontent.es/googleXXXXXXXX.html` devuelve 200 con el contenido esperado (`google-site-verification: googleXXXXXXXX.html`).
-- [ ] CA-01: La propiedad `https://imcontent.es` (modo prefijo URL) existe y aparece como **verificada** en Google Search Console.
-- [ ] CA-02: La Service Account `gsc-mcp@informes-immoral.iam.gserviceaccount.com` aparece con rol **Propietario** (no "Completo") en GSC → Usuarios y permisos de la propiedad `https://imcontent.es`.
-- [ ] CA-03: El sitemap `https://imcontent.es/sitemap.xml` está enviado desde el panel de GSC y aparece como **Success** (requiere SPEC-01 y SPEC-02 aplicadas previamente para que el sitemap tenga contenido válido).
-- [ ] CA-04: `https://imcontent.es/` aparece en el valor de `GSC_ALLOWED_SITES` del `.env` del contenedor `/opt/gsc-mcp/` en el VPS `srv1596187`.
-- [ ] CA-05: Una consulta de prueba con `gsc_list_sitemaps` sobre `https://imcontent.es/` desde el MCP compartido devuelve datos sin error de "sitio no autorizado".
+- [x] CA-01a: **No fue necesario.** GSC verificó la propiedad automáticamente vía archivo HTML — se descargó `googlea2f9488070ccab3c.html`, se subió a `public/` de este repo, se desplegó y se pulsó "Verificar" con éxito. (Nota: a diferencia de immoral.es, aquí SÍ hizo falta el archivo — la propiedad GA4 de imcontent.es se creó el mismo día y todavía no tenía datos reales, así que el método de verificación por Google Analytics no estaba disponible.)
+- [x] CA-01: La propiedad `https://imcontent.es` (modo prefijo URL) existe y aparece como **verificada** en Google Search Console.
+- [x] CA-02: La Service Account `gsc-mcp@informes-immoral.iam.gserviceaccount.com` añadida con rol **Propietario** en GSC → Usuarios y permisos de la propiedad `https://imcontent.es`.
+- [x] CA-03: El sitemap `https://imcontent.es/sitemap.xml` enviado desde el panel de GSC, estado **Correcto**, 155 páginas descubiertas (151 artículos + 4 estáticas).
+- [x] CA-04: `https://imcontent.es/` añadido al valor de `GSC_ALLOWED_SITES` del `.env` del contenedor `/opt/gsc-mcp/` en el VPS `srv1596187` (vía terminal del panel de Hostinger, no por SSH directo — ver Historial).
+- [x] CA-05: `gsc_list_sitemaps` sobre `https://imcontent.es/` desde el MCP compartido devuelve datos: 155 URLs enviadas, 0 errores.
 
 ---
 
@@ -138,3 +138,4 @@ No aplica.
 |---|---|---|---|
 | 1.0 | 2026-07-13 | Versión inicial. Marcada como draft — acción manual, fuera del alcance de este repo. No se implementa código en esta ronda. | David Navarrete |
 | 1.1 | 2026-07-13 | Auditoría con Claude Opus. Corregida contradicción con doc del equipo: la SPEC recomendaba DNS TXT, pero la página "03 — Infraestructura compartida" del doc `knvz4-82755` dice explícitamente que el método probado en Immoral es archivo HTML en `public/` (DNS TXT descartado por experiencia previa en IONOS). Cambiado a verificación por prefijo URL + archivo HTML, con un mínimo cambio de código (commit del archivo en `public/`). Añadidos los detalles concretos que faltaban: email exacto de la Service Account (`gsc-mcp@informes-immoral.iam.gserviceaccount.com`), ruta del `.env` del VPS (`/opt/gsc-mcp/.env`), nombre del VPS (`srv1596187`), formato de valor de `GSC_ALLOWED_SITES` (URL con protocolo y barra final), rol correcto ("Propietario" no "Completo") y paso de reconectar el conector de Claude.ai. Añadidos CA-01a (verificable localmente) y CA-04/CA-05. | David Navarrete |
+| 2.0 | 2026-07-14 | **Implementada de punta a punta.** Archivo `googlea2f9488070ccab3c.html` subido a `public/`, propiedad verificada. Service Account añadida como Propietario. Sitemap enviado, estado Correcto, 155 páginas. `GSC_ALLOWED_SITES` actualizado en el VPS — el edit manual del `.env` por SSH con clave temporal no persistió porque el agente de Hostinger sincroniza `authorized_keys` desde su panel y revierte cambios manuales por terminal; se hizo directamente en la terminal del panel de Hostinger con `sed`. Verificado con `gsc_list_sitemaps` desde el MCP compartido. | David Navarrete + Claude |
