@@ -1,13 +1,18 @@
 # Configuración de la skill de análisis SEO/GSC para imcontent-landing
 # Proyecto: imcontent.es
-#
-# Este archivo queda intencionalmente mínimo — se completará cuando se dé de alta
-# la propiedad en Google Search Console (ver SPEC-08) y se conecte el MCP de GSC.
 
 site: https://imcontent.es/
 
-report_destinations: []
+report_destinations:
+  - clickup_subpage
 
-clickup: {}
+clickup:
+  parent_page_id: knvz4-242035
+  workspace_id: "20639716"
+  page_title_prefix: "Informe SEO"
 
-thresholds: {}
+thresholds:
+  position_drop_alert: 5       # Alertar si una query cae más de N posiciones
+  ctr_low_alert: 0.005         # CTR < 0.5% con impresiones altas = alerta/oportunidad
+  min_impressions_opportunity: 50   # Impresiones mínimas para aparecer en sección Oportunidades
+  min_impressions_alert: 100   # Impresiones mínimas para disparar alerta de 0 clics
