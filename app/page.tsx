@@ -9,6 +9,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
+  alternates: { canonical: getBaseUrl() || undefined },
   openGraph: {
     title,
     description,
